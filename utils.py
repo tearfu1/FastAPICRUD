@@ -1,20 +1,5 @@
 import json
-
-
-def json_to_dict_list(filename):
-    """
-        Преобразует JSON-строку из файла в список словарей.
-
-        :param filename: Имя файла с JSON-строкой
-        :return: Список словарей или None в случае ошибки
-    """
-    try:
-        with open(filename, 'r',encoding='utf-8') as json_file:
-            dict_list = json.load(json_file)
-        return dict_list
-    except (TypeError, ValueError, IOError) as e:
-        print(f"Ошибка при чтении JSON из файла или преобразовании в список словарей: {e}")
-        return None
+from json_db_lite import JSONDatabase
 
 
 def dict_list_to_json(dict_list, filename):
@@ -33,3 +18,29 @@ def dict_list_to_json(dict_list, filename):
     except (TypeError, ValueError, IOError) as e:
         print(f"Ошибка при преобразовании списка словарей в JSON или записи в файл: {e}")
         return None
+
+
+small_db = JSONDatabase(file_path='students.json')
+
+# получаем все записи
+def json_to_dict_list():
+    return small_db.get_all_records()
+
+
+# добавляем студента
+def add_student(student: dict):
+    student['date_of_birth'] = student['date_of_birth'].strftime('%Y-%m-%d')
+    small_db.add_records(student)
+    return True
+
+
+# обновляем данные по студенту
+def upd_student(upd_filter: dict, new_data: dict):
+    small_db.update_record_by_key(upd_filter, new_data)
+    return True
+
+
+# удаляем студента
+def dell_student(key: str, value: str):
+    small_db.delete_record_by_key(key, value)
+    return True

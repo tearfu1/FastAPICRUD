@@ -1,35 +1,48 @@
 from enum import Enum
 from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationError
 from datetime import date, datetime
-from typing import Optional, List
-from fastapi import FastAPI, Depends
-from utils import json_to_dict_list, dict_list_to_json
+from typing import Optional, List, Any
+from fastapi import FastAPI, Depends, HTTPException
+from utils import json_to_dict_list, add_student, upd_student, dell_student
 import os
 import re
 
 app = FastAPI()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
 parent_dir = os.path.dirname(script_dir)
-
 path_to_json = os.path.join(parent_dir, 'students.json')
 
 
-class SStudent(BaseModel):
-    class Major(str, Enum):
-        informatics = "Информатика"
-        economics = "Экономика"
-        law = "Право"
-        medicine = "Медицина"
-        engineering = "Инженерия"
-        languages = "Языки"
-        psychology = "Психология"
-        biology = "Биология"
-        maths = "Математика"
-        ecology = "Экология"
-        history = "История"
+class Major(str, Enum):
+    informatics = "Информатика"
+    economics = "Экономика"
+    law = "Право"
+    medicine = "Медицина"
+    engineering = "Инженерия"
+    languages = "Языки"
+    psychology = "Психология"
+    biology = "Биология"
+    maths = "Математика"
+    ecology = "Экология"
+    history = "История"
 
+
+class SUpdateFilter(BaseModel):
+    student_id: int
+
+
+class SStudentUpdate(BaseModel):
+    course: int = Field(default=..., ge=1, le=5, description="Курс должен быть в диапазоне от 1 до 5")
+    major: Optional[Major] = Field(default=..., description="Специальность студента")
+
+
+class SDeleteFilter(BaseModel):
+    key: str
+    value: Any
+
+
+class SStudent(BaseModel):
     student_id: int
     phone_number: str = Field(default=..., description="Номер телефона в международном формате, начинающийся с '+'")
     first_name: str = Field(default=..., min_length=1, max_length=50, description="Имя студента, от 1 до 50 символов")
@@ -69,7 +82,7 @@ class RBStudent:
 
 @app.get("/student", response_model=SStudent)
 def get_student_from_param_id(student_id: int):
-    students = json_to_dict_list(path_to_json)
+    students = json_to_dict_list()
     for student in students:
         if student["student_id"] == student_id:
             return student
@@ -77,7 +90,7 @@ def get_student_from_param_id(student_id: int):
 
 @app.get("/students/{course}")
 def get_all_students_course(request_body: RBStudent = Depends()) -> List[SStudent]:
-    students = json_to_dict_list(path_to_json)
+    students = json_to_dict_list()
     filtered_students = []
     course = request_body.course
     major = request_body.major
@@ -92,3 +105,27 @@ def get_all_students_course(request_body: RBStudent = Depends()) -> List[SStuden
     if enrollment_year:
         filtered_students = [student for student in filtered_students if student['enrollment_year'] == enrollment_year]
     return filtered_students
+
+
+@app.post("/add_student")
+def add_student_handler(student: SStudent):
+    student_dict = student.model_dump()
+    add_student(student_dict)
+    return {"message": "Студент успешно добавлен!"}
+
+
+@app.put("/update_student")
+def update_student_handler(filter_student: SUpdateFilter, new_data: SStudentUpdate):
+    check = upd_student(filter_student.model_dump(), new_data.model_dump())
+    # if check:
+    return {"message": "Информация о студенте успешно обновлена!"}
+    # else:
+    #     raise HTTPException(status_code=400, detail="Ошибка при обновлении информации о студенте")
+
+@app.delete("/delete_student")
+def delete_student_handler(filter_student: SDeleteFilter):
+    check = dell_student(filter_student.key, filter_student.value)
+    if check:
+        return {"message": "Студент успешно удален!"}
+    else:
+        raise HTTPException(status_code=400, detail="Ошибка при удалении студента")
