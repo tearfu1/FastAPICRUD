@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationErro
 from datetime import date, datetime
 from typing import Optional, List
 from fastapi import FastAPI, Depends
-from utils import json_to_dict_list
+from utils import json_to_dict_list, dict_list_to_json
 import os
 import re
 
@@ -24,6 +24,11 @@ class SStudent(BaseModel):
         medicine = "Медицина"
         engineering = "Инженерия"
         languages = "Языки"
+        psychology = "Психология"
+        biology = "Биология"
+        maths = "Математика"
+        ecology = "Экология"
+        history = "История"
 
     student_id: int
     phone_number: str = Field(default=..., description="Номер телефона в международном формате, начинающийся с '+'")
@@ -56,7 +61,7 @@ class SStudent(BaseModel):
 
 
 class RBStudent:
-    def __init__(self, course: int, major: Optional[str] = None, enrollment_year: Optional[int] = 2018):
+    def __init__(self, course: int, major: Optional[str] = None, enrollment_year: Optional[int] = None):
         self.course: int = course
         self.major: Optional[str] = major
         self.enrollment_year: Optional[int] = enrollment_year
@@ -86,5 +91,4 @@ def get_all_students_course(request_body: RBStudent = Depends()) -> List[SStuden
 
     if enrollment_year:
         filtered_students = [student for student in filtered_students if student['enrollment_year'] == enrollment_year]
-
     return filtered_students
