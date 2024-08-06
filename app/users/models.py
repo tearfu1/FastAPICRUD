@@ -1,5 +1,5 @@
-from sqlalchemy import text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import text, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base, str_uniq, int_pk
 
 
@@ -10,14 +10,21 @@ class User(Base):
     last_name: Mapped[str]
     email: Mapped[str_uniq]
     password: Mapped[str]
-
-    is_user: Mapped[bool] = mapped_column(default=True, server_default=text('true'), nullable=False)
-    is_student: Mapped[bool] = mapped_column(default=False, server_default=text('false'), nullable=False)
-    is_teacher: Mapped[bool] = mapped_column(default=False, server_default=text('false'), nullable=False)
-    is_admin: Mapped[bool] = mapped_column(default=False, server_default=text('false'), nullable=False)
-    is_super_admin: Mapped[bool] = mapped_column(default=False, server_default=text('false'), nullable=False)
+    privilege_id: Mapped[int] = mapped_column(ForeignKey('privileges.id'), server_default=text('1'))
+    privilege: Mapped["Privilege"] = relationship("Privilege", back_populates="users")
 
     extend_existing = True
 
     def __repr__(self):
         return f"{self.__class__.__name__}(id={self.id})"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "phone_number": self.phone_number,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "privilege_id": self.privilege_id,
+            "privilege": self.privilege.privilege_name,
+        }

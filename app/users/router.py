@@ -3,7 +3,7 @@ from app.users.auth import get_password_hash, authenticate_user, create_access_t
 from app.users.dao import UsersDAO
 from app.users.dependecies import get_current_user, get_current_admin_user
 from app.users.models import User
-from app.users.schemas import SUserRegister, SUserAuth
+from app.users.schemas import SUserRegister, SUserAuth, SUserSetPrivilege
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
@@ -48,3 +48,12 @@ async def logout_user(response: Response):
     response.delete_cookie(key="users_access_token")
     return {'message': 'Пользователь успешно вышел из системы'}
 
+
+@router.post("/set_privilege/")
+async def set_user_privilege(set_user_data: SUserSetPrivilege, user_data: User = Depends(get_current_admin_user)):
+    check = await UsersDAO.update(filter_by={"email": set_user_data.email},
+                                  privilege_id=set_user_data.privilege_id)
+    if check:
+        return {"message": f"Роль успешно обновлена на {set_user_data.privilege_id}"}
+    else:
+        return {"message": "Что-то пошло не так"}

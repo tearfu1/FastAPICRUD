@@ -5,6 +5,7 @@ from app.config import get_auth_data
 from app.exceptions import TokenExpiredException, NoJwtException, NoUserIdException, ForbiddenException, TokenNoFound
 from app.users.dao import UsersDAO
 from app.users.models import User
+from app.privileges.dao import PrivilegeDAO
 
 
 def get_token(request: Request):
@@ -30,7 +31,7 @@ async def get_current_user(token: str = Depends(get_token)):
     if not user_id:
         raise NoUserIdException
 
-    user = await UsersDAO.find_one_or_none_by_id(int(user_id))
+    user = await UsersDAO.find_full_data(int(user_id))
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
 
@@ -38,6 +39,7 @@ async def get_current_user(token: str = Depends(get_token)):
 
 
 async def get_current_admin_user(current_user: User = Depends(get_current_user)):
-    if current_user.is_admin:
+    privilege = current_user.to_dict()['privilege']
+    if privilege == "admin":
         return current_user
     raise ForbiddenException

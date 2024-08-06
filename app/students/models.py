@@ -43,4 +43,4 @@ class Student(Base):
             "major_id": self.major_id
         }
 
-# создаем модель таблицы факультетов (majors)
+

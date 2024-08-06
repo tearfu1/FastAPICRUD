@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
@@ -8,6 +10,7 @@ class SUserRegister(BaseModel):
     phone_number: str = Field(..., description="Номер телефона в международном формате, начинающийся с '+'")
     first_name: str = Field(..., min_length=3, max_length=50, description="Имя, от 3 до 50 символов")
     last_name: str = Field(..., min_length=3, max_length=50, description="Фамилия, от 3 до 50 символов")
+    privilege_id: int = Field(1, ge=1, description="Роль пользователя")
 
     @field_validator("phone_number")
     @classmethod
@@ -16,6 +19,12 @@ class SUserRegister(BaseModel):
             raise ValueError('Номер телефона должен начинаться с "+" и содержать от 5 до 15 цифр')
         return value
 
+
 class SUserAuth(BaseModel):
     email: EmailStr = Field(..., description="Электронная почта")
     password: str = Field(..., min_length=5, max_length=50, description="Пароль, от 5 до 50 знаков")
+
+
+class SUserSetPrivilege(BaseModel):
+    email: EmailStr = Field(..., description="Электронная почта")
+    privilege_id: int = Field(..., description="Привилегии")
